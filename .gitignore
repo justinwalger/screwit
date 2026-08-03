@@ -2,10 +2,14 @@
 __pycache__/
 *.py[codz]
 *$py.class
-
+.DS_Store
 # C extensions
 *.so
-
+/notebooks/results
+*/wandb
+/data
+/results
+.venv
 # Distribution / packaging
 .Python
 build/
@@ -216,3 +220,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+terraform/key.json
