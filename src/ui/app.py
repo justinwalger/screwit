@@ -10,6 +10,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import gradio as gr
 import httpx
+# hotfix: should not be importing uvicorn here, but gradio's FastAPI mount requires it to be installed
+import uvicorn
+from fastapi import FastAPI
 from PIL import Image
 
 from src.shared.config import get_ui_settings
@@ -66,17 +69,22 @@ demo = gr.Interface(
 
 
 def main() -> None:
-    # No explicit dark-mode forcing needed: Gradio's default theme already
-    # follows the browser/OS's prefers-color-scheme automatically, on both
-    # the login page and the app itself - verified with a simulated dark
-    # browser context.
-    demo.launch(
+    port = int(os.environ.get("PORT", "7860"))
+
+
+    app = FastAPI()
+    gr.mount_gradio_app(
+        app,
+        demo,
+        path="/",
+        server_name="0.0.0.0",
+        server_port=port,
         auth=lambda _username, password: password == _settings.app_password,
         auth_message="Enter the shared password (username is ignored, type anything).",
-        server_name="0.0.0.0",
-        server_port=int(os.environ.get("PORT", "7860")),
+
         theme=gr.themes.Base(primary_hue="indigo"),
     )
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 
 if __name__ == "__main__":
