@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import gradio as gr
 import httpx
+
 # hotfix: should not be importing uvicorn here, but gradio's FastAPI mount requires it to be installed
 import uvicorn
 from fastapi import FastAPI
@@ -71,7 +72,6 @@ demo = gr.Interface(
 def main() -> None:
     port = int(os.environ.get("PORT", "7860"))
 
-
     app = FastAPI()
     gr.mount_gradio_app(
         app,
@@ -81,7 +81,6 @@ def main() -> None:
         server_port=port,
         auth=lambda _username, password: password == _settings.app_password,
         auth_message="Enter the shared password (username is ignored, type anything).",
-
         theme=gr.themes.Base(primary_hue="indigo"),
     )
     uvicorn.run(app, host="0.0.0.0", port=port)
