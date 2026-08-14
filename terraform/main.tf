@@ -45,6 +45,16 @@ resource "google_cloud_run_v2_service" "fastapi_backend" {
       ports {
         container_port = 8080
       }
+
+
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "1Gi"
+        }
+
+        cpu_idle = true
+      }
     }
   }
 }
