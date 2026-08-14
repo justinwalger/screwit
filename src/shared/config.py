@@ -17,10 +17,17 @@ class Settings(BaseSettings):
     hf_api_key: str
     hf_url: str = "https://huggingface.co"
     hf_model_repo_id: str
-    hf_model_filename: str = "model.onnx"
+    # Name of the model that was trained (e.g. "patchcore", "padim") - drives the
+    # uploaded/downloaded filename below, so training and serving can't drift
+    # out of sync by editing one but not the other.
+    model_name: str = "padim"
     app_password: str
 
     detection_threshold: float = 0.6
+
+    @property
+    def hf_model_filename(self) -> str:
+        return f"{self.model_name}_onnx"
 
 
 @lru_cache
@@ -50,7 +57,12 @@ def get_ui_settings() -> UISettings:
 
 
 class TrainingSettings(BaseSettings):
-    """Settings for local/notebook training runs - not needed by the deployed API or UI."""
+    """Settings for local/notebook training runs - not needed by the deployed API or UI.
+
+    Model-specific hyperparameters (batch sizes, epochs, ...) live in
+    configs/<model_name>.yaml instead, since they differ per model type -
+    see notebooks/train.ipynb.
+    """
 
     model_config = SettingsConfigDict(
         env_file=_ENV_FILE,
@@ -61,12 +73,7 @@ class TrainingSettings(BaseSettings):
 
     data_root: Path = Path("../data")
     category: str = "screw"
-    train_batch_size: int = 64
-    eval_batch_size: int = 64
-    num_neighbors: int = 6
-    coreset_sampling_ratio: float = 0.1
     wandb_project: str = "screwit"
-    wandb_run_name: str = "screw-patchcore"
 
 
 @lru_cache

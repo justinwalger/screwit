@@ -88,7 +88,9 @@ async def predict_image(payload: ImagePayload, request: Request):
 
     model = request.app.state.model
     pred_score, _pred_label, anomaly_map, pred_mask = model.run(None, {"input": array})
-    pred_label = float(pred_score[0]) >= get_settings().detection_threshold
+
+    score = pred_score.item()
+    pred_label = score >= get_settings().detection_threshold
 
     mask = pred_mask[0, 0]
     normalized_map = _normalize(anomaly_map[0, 0])
@@ -100,7 +102,7 @@ async def predict_image(payload: ImagePayload, request: Request):
 
     return PredictionResult(
         filename=payload.filename,
-        pred_score=float(pred_score[0]),
+        pred_score=score,
         pred_label=pred_label,
         pred_mask_png_b64=_encode_png((mask * 255).astype(np.uint8), mode="L"),
         heatmap_png_b64=_encode_png(_make_heatmap(image_resized, normalized_map)),

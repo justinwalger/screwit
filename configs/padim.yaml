@@ -1,0 +1,5 @@
+# PaDiM hyperparameters. Loaded when MODEL_NAME=padim (see .env.example).
+train_batch_size: 32
+eval_batch_size: 32
+# No-op: PaDiM forces max_epochs=1 internally regardless of this value.
+max_epochs: 10

@@ -1,18 +1,83 @@
-"""Streamlit entry point for the application.
+"""Gradio entry point: upload a screw photo, get back an anomaly score + defect mask."""
 
-design is inspired by https://github.com/streamlit/demo-ai-ai/blob/main/streamlit_app.py. thanks!
-"""
-
+import base64
+import io
+import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-import streamlit as st
+import gradio as gr
+import httpx
+from PIL import Image
 
-from src.ui.constants import PAGE_ICON, PAGE_TITLE
-from src.ui.views.main import create_main_page
+from src.shared.config import get_ui_settings
+from src.ui.backend_connector import BackendConnector
+from src.ui.constants import ABOUT_TEXT, PAGE_ICON, PAGE_TITLE
 
-st.set_page_config(page_title=PAGE_TITLE, page_icon=PAGE_ICON, layout="wide")
+_connector = BackendConnector()
+_settings = get_ui_settings()
 
-create_main_page()
+
+def _decode(b64: str) -> Image.Image:
+    return Image.open(io.BytesIO(base64.b64decode(b64)))
+
+
+def predict(image: Image.Image | None) -> tuple[str, float, Image.Image, Image.Image, Image.Image]:
+    if image is None:
+        raise gr.Error("Upload a photo first.")
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+
+    try:
+        # The UI's own password gate (below) already authenticated this session,
+        # so the shared secret from config - not anything typed at request time -
+        # is what's forwarded to the API.
+        result = _connector.predict(buffer.getvalue(), "upload.png", _settings.app_password)
+    except httpx.HTTPError as exc:
+        raise gr.Error(f"Prediction failed: {exc}") from exc
+
+    label = "🔴 Defect detected" if result.pred_label else "🟢 Looks good"
+    return (
+        label,
+        round(result.pred_score, 2),
+        _decode(result.result_png_b64),
+        _decode(result.heatmap_png_b64),
+        _decode(result.pred_mask_png_b64),
+    )
+
+
+demo = gr.Interface(
+    fn=predict,
+    inputs=gr.Image(type="pil", label="Screw photo"),
+    outputs=[
+        gr.Label(label="Result"),
+        gr.Number(label="Anomaly score"),
+        gr.Image(label="Detected defect"),
+        gr.Image(label="Anomaly heatmap"),
+        gr.Image(label="Predicted defect mask"),
+    ],
+    title=f"{PAGE_ICON} {PAGE_TITLE}",
+    description=ABOUT_TEXT,
+    flagging_mode="never",
+)
+
+
+def main() -> None:
+    # No explicit dark-mode forcing needed: Gradio's default theme already
+    # follows the browser/OS's prefers-color-scheme automatically, on both
+    # the login page and the app itself - verified with a simulated dark
+    # browser context.
+    demo.launch(
+        auth=lambda _username, password: password == _settings.app_password,
+        auth_message="Enter the shared password (username is ignored, type anything).",
+        server_name="0.0.0.0",
+        server_port=int(os.environ.get("PORT", "7860")),
+        theme=gr.themes.Base(primary_hue="indigo"),
+    )
+
+
+if __name__ == "__main__":
+    main()

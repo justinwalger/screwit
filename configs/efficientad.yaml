@@ -1,0 +1,9 @@
+# EfficientAd hyperparameters. Loaded when MODEL_NAME=efficientad (see .env.example).
+# Hard requirement: EfficientAd raises ValueError at train start for any
+# train_batch_size other than 1.
+train_batch_size: 1
+eval_batch_size: 32
+# Unlike PatchCore/PaDiM, this actually matters here - EfficientAd is
+# gradient-trained and defaults to Lightning's own max_epochs=1000 if left
+# unset. Bump this for a real run.
+max_epochs: 15

@@ -27,10 +27,11 @@ train = [
     "anomalib>=2.6.0",
     "huggingface-hub>=1.26.0",
     "onnx>=1.22.0",
+    "pyyaml>=6.0.3",
     "wandb>=0.28.1",
 ]
 ui = [
-    "streamlit>=1.51.0",
+    "gradio>=5.0.0",
     "httpx>=0.28.1",
     "pillow>=12.0.0",
     "pydantic-settings>=2.11.0",
