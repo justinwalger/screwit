@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from PIL import UnidentifiedImageError
 
 from src.api.dependencies import get_model, verify_api_password
-from src.api.services.predict import run_prediction
+from src.api.services.prediction import run_prediction
 from src.shared.models import ImagePayload, PredictionResult
 
 router = APIRouter(

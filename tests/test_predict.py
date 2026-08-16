@@ -27,7 +27,7 @@ class _FakeModel:
 @pytest.fixture
 def client(monkeypatch):
     monkeypatch.setattr(
-        "src.api.services.predict.get_settings",
+        "src.api.services.prediction.get_settings",
         lambda: SimpleNamespace(detection_threshold=0.6),
     )
 

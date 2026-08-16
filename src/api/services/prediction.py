@@ -1,5 +1,6 @@
 import base64
 import io
+from typing import cast
 
 import cv2
 import numpy as np
@@ -74,7 +75,13 @@ def run_prediction(payload: ImagePayload, model: ort.InferenceSession) -> Predic
     array = np.array(image, dtype=np.float32) / 255.0  # HWC, [0, 1]
     array = array.transpose(2, 0, 1)[None, ...]  # -> NCHW, add batch dim
 
-    pred_score, _pred_label, anomaly_map, pred_mask = model.run(None, {"input": array})
+    # InferenceSession.run() is typed to return ndarray | SparseTensor | list | dict
+    # per output, since ONNX allows any of those - this model's exported outputs
+    # are always dense tensors, so narrow the type rather than guard at runtime.
+    outputs = model.run(None, {"input": array})
+    pred_score = cast(np.ndarray, outputs[0])
+    anomaly_map = cast(np.ndarray, outputs[2])
+    pred_mask = cast(np.ndarray, outputs[3])
 
     score = pred_score.item()
     pred_label = score >= get_settings().detection_threshold

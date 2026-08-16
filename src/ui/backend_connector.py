@@ -3,7 +3,7 @@ import base64
 import httpx
 
 from src.shared.config import get_ui_settings
-from src.shared.models import PredictionResult
+from src.shared.models import ImagePayload, PredictionResult
 
 
 class BackendConnector:
@@ -13,9 +13,10 @@ class BackendConnector:
 
     def predict(self, image_bytes: bytes, filename: str, password: str) -> PredictionResult:
         """Send an image to the /predict/predict endpoint and return the parsed result."""
+        payload = ImagePayload(filename=filename, image_b64=base64.b64encode(image_bytes).decode())
         response = httpx.post(
             f"{self.api_url}/predict/predict",
-            json={"filename": filename, "image_b64": base64.b64encode(image_bytes).decode()},
+            json=payload.model_dump(),
             headers={"X-API-Password": password},
             timeout=self.timeout,
         )
