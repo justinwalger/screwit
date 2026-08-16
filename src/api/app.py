@@ -1,28 +1,23 @@
 from contextlib import asynccontextmanager
 
 import onnxruntime as ort
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from huggingface_hub import hf_hub_download
 
 from src.shared.config import get_settings
-
-from .dependencies import download_model_from_hf
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ONNX model once at startup instead of per-request.
     settings = get_settings()
-    model = download_model_from_hf(
+    model_path = hf_hub_download(
         repo_id=settings.hf_model_repo_id,
         filename=settings.hf_model_filename,
         token=settings.hf_api_key,
     )
-    app.state.model = ort.InferenceSession(model)
+    app.state.model = ort.InferenceSession(model_path)
     yield
-
-
-def get_model(request: Request) -> ort.InferenceSession:
-    return request.app.state.model
 
 
 app = FastAPI(

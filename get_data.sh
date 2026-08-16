@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Script to download MVTec AD data to ./data for categories specified as parameters.
-# Defaults to: screw tile transistor
+# Defaults to: screw
 #
 # Usage: ./get_data.sh [category ...]
 #   e.g. ./get_data.sh bottle cable
@@ -17,7 +17,7 @@ URL="https://www.mydrive.ch/shares/150996/b52ecdcbf521176e9db9c731f2304b27/downl
 
 categories=("$@")
 if [ ${#categories[@]} -eq 0 ]; then
-    categories=(screw tile transistor)
+    categories=(screw)
 fi
 
 for category in "${categories[@]}"; do

@@ -1,11 +1,25 @@
 # screwit
 
-Anomaly detection for screws (and other MVTec-style categories): train a PatchCore
-model with [anomalib](https://github.com/open-edge-platform/anomalib), export it to
-ONNX, and serve it behind a FastAPI endpoint with a Gradio UI on top — upload a
-photo, get back a score and a defect heatmap.
+Anomaly detection for screws: train a PatchCore model with
+[anomalib](https://github.com/open-edge-platform/anomalib), export it to ONNX, and
+serve it behind a FastAPI endpoint with a Gradio UI on top — upload a photo, get
+back a score and a defect heatmap.
 
 ![screwit demo: upload a screw photo, get an anomaly score, heatmap, and defect mask](docs/demo.gif)
+
+## Architecture
+
+```mermaid
+flowchart LR
+    User(["User"]) --> UI["Gradio UI\n(src/ui)"]
+    UI -- "POST /predict\n(X-API-Password)" --> API["FastAPI\n(src/api)"]
+    API -- "ONNX Runtime\ninference" --> Model[("PatchCore model\n(.onnx, from HF Hub)")]
+    API -- score + heatmap + mask --> UI
+```
+
+The API loads the PatchCore ONNX model from Hugging Face Hub once at startup
+(`src/api/app.py`'s lifespan) and keeps it in memory; the UI is a thin client that
+just forwards uploads to the API and renders the response.
 
 ## Layout
 
@@ -23,7 +37,7 @@ photo, get back a score and a defect heatmap.
 uv sync --all-groups
 cp .env.example .env   # fill in HF_API_KEY etc.
 
-./get_data.sh                                  # default: screw, tile, transistor
+./get_data.sh                                  # default: screw
 run notebooks/train.ipynb       # train + export a model
 
 uv run uvicorn src.api.app:app --reload        # API on :8000
@@ -47,12 +61,10 @@ Not hyperparameter-tuned — see `configs/` to adjust and re-run.
 
 ## Deployment
 
-GCP Cloud Run, via Terraform (`terraform/`) — meant to be auto-applied by a
-`deploy.yml` GitHub Actions workflow on every push to `main`: build+push the
+GCP Cloud Run, via Terraform (`terraform/`), auto-applied by
+`.github/workflows/deploy.yml` on every push to `main`: build+push the
 backend/frontend images to Artifact Registry, then `terraform apply` the
-`fastapi-backend` and `gradio-frontend` Cloud Run services. That workflow
-doesn't exist yet (only `.github/workflows/basic.yml`, lint/test only) — this
-documents the target setup once it's added.
+`fastapi-backend` and `gradio-frontend` Cloud Run services.
 
 Terraform is split into two separate configs with separate state, on purpose:
 
@@ -101,9 +113,12 @@ workflow fails immediately (empty backend config).
 
 ## Roadmap
 
+Done
+- Evals (image/pixel AUROC, F1) across PatchCore/PaDiM/EfficientAd — see Eval above
+- Real deployment (Cloud Run via Terraform, `deploy.yml`)
+
 Training
 - Configs, experiment tracking, hyperparameter tuning
-- Try other models (PaDiM, ...) alongside PatchCore
 - Retraining pipeline with human-in-the-loop
 
 API / UI
@@ -111,14 +126,11 @@ API / UI
 - Blob storage for uploaded images
 
 Ops
-- Evals (AUROC, precision/recall, localization IoU)
-- Tests
-- Real deployment (Cloud Run via terraform)
+- Tests (currently just health + predict smoke tests)
 
 Later / exploratory
 - Edge export (run on small devices)
 - VLM experiment
-- Efficient AD models
 
 Resources
 - [MVTec AD dataset](https://www.mvtec.com/research-teaching/datasets/mvtec-ad)

@@ -9,7 +9,7 @@ class ImagePayload(BaseModel):
 
 
 class PredictionResult(BaseModel):
-    """Response body for /predict/predict."""
+    """Response body for /predict."""
 
     filename: str
     pred_score: float
