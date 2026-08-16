@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
 import onnxruntime as ort
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 
 from src.shared.config import get_settings
 
@@ -19,10 +19,6 @@ async def lifespan(app: FastAPI):
     )
     app.state.model = ort.InferenceSession(model)
     yield
-
-
-def get_model(request: Request) -> ort.InferenceSession:
-    return request.app.state.model
 
 
 app = FastAPI(

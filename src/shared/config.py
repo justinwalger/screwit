@@ -17,10 +17,10 @@ class Settings(BaseSettings):
     hf_api_key: str
     hf_url: str = "https://huggingface.co"
     hf_model_repo_id: str
-    # Name of the model that was trained (e.g. "patchcore", "padim") - drives the
-    # uploaded/downloaded filename below, so training and serving can't drift
-    # out of sync by editing one but not the other.
-    model_name: str = "padim"
+    # Name of the model that was trained - drives the uploaded/downloaded filename
+    # below, so training and serving can't drift out of sync by editing one but not
+    # the other. PatchCore only for now (see README).
+    model_name: str = "patchcore"
     app_password: str
 
     detection_threshold: float = 0.6
