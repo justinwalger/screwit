@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: screwit-api
+  labels:
+    # kube-prometheus-stack's Prometheus only discovers ServiceMonitors carrying
+    # this label, matching its own Helm release name ("monitoring") - without it,
+    # this object is silently ignored, not an error.
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: screwit-api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

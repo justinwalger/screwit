@@ -16,6 +16,7 @@ api = [
     "opencv-python-headless>=4.9.0",
     "huggingface-hub>=1.26.0",
     "pydantic-settings>=2.11.0",
+    "prometheus-fastapi-instrumentator>=8.1.0",
 ]
 dev = [
     "ipykernel>=7.3.0",

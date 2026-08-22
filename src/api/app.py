@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 import onnxruntime as ort
 from fastapi import FastAPI
 from huggingface_hub import hf_hub_download
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.shared.config import get_settings
 
@@ -32,3 +33,5 @@ from .routes import health, predict
 
 app.include_router(health.router)
 app.include_router(predict.router)
+
+Instrumentator().instrument(app).expose(app)

@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gradio-app
+spec:
+  replicas: {{ .Values.gradio.replicaCount }}
+  selector:
+    matchLabels:
+      app: gradio-app
+  template:
+    metadata:
+      labels:
+        app: gradio-app
+    spec:
+      containers:
+        - name: gradio-app
+          # No registry involved - this image only ever exists locally, loaded via
+          # `minikube image load`/`kind load docker-image`. `IfNotPresent` uses that
+          # local copy; `Always` tries (and fails) to pull it from Docker Hub instead.
+          # After a rebuild + reload, run
+          # `helm upgrade screwit ./kubernetes/screwit --set gradio.image.tag=<tag>`
+          # to pick up the change - no file edit needed.
+          image: "{{ .Values.gradio.image.repository }}:{{ .Values.gradio.image.tag }}"
+          imagePullPolicy: {{ .Values.gradio.image.pullPolicy }}
+          ports:
+            - containerPort: 7860
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secretName }}
+            - configMapRef:
+                name: screwit-config
+          resources:
+            {{- toYaml .Values.gradio.resources | nindent 12 }}
+          # "/" is the login page and returns 200 without auth, so it's usable as
+          # a probe target - "/config" would be more precise but requires the
+          # shared password and 401s otherwise.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7860
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7860
+            initialDelaySeconds: 10
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gradio-service
+spec:
+  type: {{ .Values.gradio.service.type }}
+  selector:
+    app: gradio-app
+  ports:
+    - port: {{ .Values.gradio.service.port }}
+      targetPort: 7860
