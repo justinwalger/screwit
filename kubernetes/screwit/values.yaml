@@ -1,0 +1,36 @@
+# screwit-secrets isn't managed here - real values can't be committed, same
+# reason .env is gitignored. Create it once, imperatively, before installing
+# this chart (see README's Local Kubernetes section):
+#   kubectl create secret generic screwit-secrets --from-env-file=.env \
+#     --dry-run=client -o yaml | kubectl apply -f -
+secretName: screwit-secrets
+
+configMap:
+  HF_MODEL_REPO_ID: "huggerjusti/screwit_screw"
+  BACKEND_API_URL: "http://screwit-api-service:8080"
+
+api:
+  replicaCount: 2
+  image:
+    repository: screwit-api
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests: { cpu: "1", memory: "1Gi" }
+    limits: { cpu: "1", memory: "1Gi" }
+  service:
+    type: ClusterIP
+    port: 8080
+
+gradio:
+  replicaCount: 1
+  image:
+    repository: screwit-gradio
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests: { cpu: "250m", memory: "256Mi" }
+    limits: { cpu: "500m", memory: "512Mi" }
+  service:
+    type: NodePort
+    port: 7860
